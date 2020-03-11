@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woniuxy.dao.RoleMapper">
+	<sql id="base_col_list">
+		rid,rname
+	</sql>
+	<select id="findAllocation" resultType="role" parameterType="java.lang.Integer">
+		select 
+		<include refid="base_col_list"></include>
+		from role
+		where rid in(
+			select rid from roleusers
+			where uid=#{uid}
+		)
+	</select>
+	<select id="findAll" resultType="role">
+		select 
+		<include refid="base_col_list"></include>
+		from role
+		<where>
+			<if test="queryVal!=null">
+				rname like concat('%',#{queryVal},'%')
+			</if>
+		</where>
+		limit ${(currentPage-1)*pageSize},${pageSize}
+	</select>
+	<select id="selectAll" resultType="role" parameterType="java.lang.Integer">
+		select 
+		<include refid="base_col_list"></include>
+		from role
+		where rid not in(
+			select rid from roleusers
+			where uid=#{uid}
+		)
+	</select>
+	<select id="countAll" resultType="java.lang.Integer">
+		select count(*) from role
+		<where>
+			<if test="queryVal!=null">
+				rname like concat('%',#{queryVal},'%')
+			</if>
+		</where>
+	</select>
+	<insert id="saveRole" parameterType="role">
+		insert into role
+		<trim suffixOverrides="," prefix="(" suffix=")">
+    		<if test="rname!=null">
+				rname,
+			</if>
+	    </trim>
+		values
+	    <trim suffixOverrides="," prefix="(" suffix=")">
+      		<if test="rname!=null">
+				#{rname},
+			</if>
+		</trim>
+	</insert>
+	<select id="findOne" parameterType="java.lang.Integer" resultType="role">
+		select 
+		<include refid="base_col_list"></include>
+		from role
+		<where>
+			rid=#{rid}
+		</where>
+	</select>
+	<update id="updateRole" parameterType="role">
+		update role set rname=#{rname}
+		<where>
+			rid=#{rid}
+		</where>
+	</update>
+	<delete id="deleteRole" parameterType="java.lang.Integer">
+		delete from role
+		<where>
+			rid=#{rid}
+		</where>
+	</delete>
+	
+	<delete id="delRoles" >
+		delete from role
+		 <!-- 当mybatis传参时，如果是数组或者list，那么它会自动将参数放入map并传入，这时它的key是array或者list -->
+		<where>
+			rid in 
+			<foreach collection="array" open="(" close=")" separator="," item="rid">
+				#{rid}
+			</foreach>
+		</where>
+	</delete>
+	<insert id="assignPermission">
+		insert into rolepermission values
+		<foreach collection="pids" separator="," item="pid">
+			(#{rpid},#{rid},#{pid})
+		</foreach>
+	</insert>
+	<delete id="assignPermissionDel" parameterType="java.lang.Integer">
+		delete from rolepermission
+		<where>
+			rid=#{rid}
+		</where>
+	</delete>
+</mapper>
